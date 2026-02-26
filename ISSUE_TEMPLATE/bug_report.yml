@@ -1,0 +1,40 @@
+name: 🐛 Bug Report
+description: Quick report for technical failures.
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: env
+    attributes:
+      label: Environment
+      options:
+        - Global Admin
+        - Client Prod
+        - Client Stage
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What's happening?
+      placeholder: "Briefly describe the unexpected behavior."
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps & Context
+      placeholder: |
+        1. Action A
+        2. Action B
+        3. Error encountered
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Screenshots
+      description: Paste Railway/Convex logs or drag images here.
+      render: shell
