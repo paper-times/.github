@@ -1,0 +1,18 @@
+name: 🚀 Feature Request
+description: Suggest an idea for PaperTimes
+body:
+  - type: textarea
+    id: vision
+    attributes:
+      label: The Vision
+      description: What problem are we solving?
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P0 (Blocker)
+        - P1 (Critical)
+        - P2 (Nice to have)
