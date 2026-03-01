@@ -1,0 +1,24 @@
+name: 🤖 Roo Code Task
+description: Trigger an AI agent to perform a specific dev task.
+labels: ["roo-task"]
+body:
+  - type: dropdown
+    id: roo_mode
+    attributes:
+      label: Agent Mode
+      description: Choose the specialized agent for this task.
+      options:
+        - dev-ops
+        - dev-frontend
+        - dev-backend
+        - docs-writer
+    validations:
+      required: true
+  - type: textarea
+    id: task_description
+    attributes:
+      label: Task Details
+      description: Describe exactly what needs to be built or fixed.
+      placeholder: "e.g., Create a new Convex mutation to handle user profile updates..."
+    validations:
+      required: true
