@@ -1,0 +1,58 @@
+name: Papertimes Core AI Runner
+
+on:
+  workflow_call:
+    inputs:
+      mode:
+        type: string
+        required: true
+      task_body:
+        type: string
+        required: true
+    secrets:
+      ROO_API_KEY:
+        required: true
+      ORG_GHA_TOKEN:
+        required: true
+
+jobs:
+  execute-agent:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Project Repo
+        uses: actions/checkout@v4
+        with:
+          path: workspace
+
+      - name: Checkout Global Standards
+        uses: actions/checkout@v4
+        with:
+          repository: papertimes/ai-standards
+          token: ${{ secrets.ORG_GHA_TOKEN }}
+          path: global-rules
+
+      - name: Merge Rule Layers
+        run: |
+          MODE="${{ inputs.mode }}"
+          TARGET_DIR="workspace/.roo/rules-$MODE"
+          
+          # Create the directory if it doesn't exist in the project
+          mkdir -p $TARGET_DIR
+          
+          # 1. Inject Global Mode Standards (e.g., global-rules/dev-frontend/*)
+          if [ -d "global-rules/$MODE" ]; then
+            cp -r global-rules/$MODE/* $TARGET_DIR/
+          fi
+          
+          # Note: Project-specific rules already exist in workspace/.roo/rules-$MODE
+          # and will be loaded alphabetically by Roo Code.
+
+      - name: Run Roo CLI
+        working-directory: workspace
+        run: |
+          npm install -g @roocode/cli
+          # The 'task_body' from the issue becomes the instruction
+          roo run --instructions "${{ inputs.task_body }}" --mode "${{ inputs.mode }}"
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.ROO_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
