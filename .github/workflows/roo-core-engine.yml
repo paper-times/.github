@@ -1,57 +1,62 @@
-name: Papertimes Core AI Runner
+name: 🏗️ Papertimes Core AI Runner
 
 on:
   workflow_call:
     inputs:
       mode:
+        description: "The Roo Mode slug (e.g., dev-frontend)"
         type: string
         required: true
       task_body:
+        description: "The instructions from the GitHub Issue"
         type: string
         required: true
     secrets:
       ROO_API_KEY:
-        required: true
-      ORG_GHA_TOKEN:
         required: true
 
 jobs:
   execute-agent:
     runs-on: ubuntu-latest
     steps:
+      # 1. Checkout the project that triggered the action (e.g., Ocean)
       - name: Checkout Project Repo
         uses: actions/checkout@v4
         with:
           path: workspace
 
-      - name: Checkout Global Standards
+      # 2. Checkout the .github repo to get the standards
+      - name: Checkout Org Standards
         uses: actions/checkout@v4
         with:
-          repository: papertimes/ai-standards
-          token: ${{ secrets.ORG_GHA_TOKEN }}
-          path: global-rules
+          repository: papertimes/.github
+          path: org-standards
 
-      - name: Merge Rule Layers
+      # 3. Layer the Rules and Modes
+      - name: Layer AI Environment
         run: |
           MODE="${{ inputs.mode }}"
-          TARGET_DIR="workspace/.roo/rules-$MODE"
+          WS_ROOT="workspace"
+          RULES_DIR="$WS_ROOT/.roo/rules-$MODE"
           
-          # Create the directory if it doesn't exist in the project
-          mkdir -p $TARGET_DIR
+          echo "🛠️ Injecting Mode Definitions..."
+          cp org-standards/roo-standards/custom_modes.yaml $WS_ROOT/.roomodes
           
-          # 1. Inject Global Mode Standards (e.g., global-rules/dev-frontend/*)
-          if [ -d "global-rules/$MODE" ]; then
-            cp -r global-rules/$MODE/* $TARGET_DIR/
+          echo "📂 Merging Global Rules for $MODE..."
+          mkdir -p $RULES_DIR
+          # Copy global rules with 00- prefix to ensure they load first
+          if [ -d "org-standards/roo-standards/$MODE" ]; then
+            cp org-standards/roo-standards/$MODE/* $RULES_DIR/
           fi
           
-          # Note: Project-specific rules already exist in workspace/.roo/rules-$MODE
-          # and will be loaded alphabetically by Roo Code.
+          echo "✅ Environment Ready."
 
+      # 4. Run the Roo CLI
       - name: Run Roo CLI
         working-directory: workspace
         run: |
           npm install -g @roocode/cli
-          # The 'task_body' from the issue becomes the instruction
+          # We pass the issue body as the specific task instructions
           roo run --instructions "${{ inputs.task_body }}" --mode "${{ inputs.mode }}"
         env:
           OPENROUTER_API_KEY: ${{ secrets.ROO_API_KEY }}
