@@ -1,0 +1,88 @@
+name: 'Roo Code CLI Action'
+description: 'Run the Roo Code agent to perform tasks in your repository'
+author: 'Your Name/Org'
+inputs:
+  prompt:
+    description: 'The task for Roo Code to perform'
+    required: false
+  prompt_file:
+    description: 'Path to a file containing the prompt'
+    required: false
+  workspace:
+    description: 'Workspace path to operate in'
+    default: '.'
+  api_key:
+    description: 'API key for the LLM provider'
+    required: true
+  provider:
+    description: 'API provider (anthropic, openai, openrouter, gemini, etc.)'
+    default: 'openrouter'
+  model:
+    description: 'Model to use'
+    default: 'anthropic/claude-3-5-sonnet-20241022'
+  mode:
+    description: 'Mode to start in (code, architect, ask, etc.)'
+    default: 'code'
+  version:
+    description: 'Specific version of Roo CLI to install'
+    required: false
+  extra_args:
+    description: 'Additional CLI arguments (e.g., --debug)'
+    required: false
+
+outputs:
+  response:
+    description: 'The output from the Roo Code agent'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install Roo Code CLI
+      shell: bash
+      run: |
+        if [ -n "${{ inputs.version }}" ]; then
+          export ROO_VERSION=${{ inputs.version }}
+        fi
+        curl -fsSL https://raw.githubusercontent.com/RooCodeInc/Roo-Code/main/apps/cli/install.sh | sh
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+    - name: Run Roo Code Task
+      shell: bash
+      id: roo-run
+      env:
+        # Dynamically set the correct API key env var based on provider
+        ROO_API_KEY: ${{ inputs.api_key }}
+        ANTHROPIC_API_KEY: ${{ inputs.api_key }}
+        OPENAI_API_KEY: ${{ inputs.api_key }}
+        OPENROUTER_API_KEY: ${{ inputs.api_key }}
+        GOOGLE_API_KEY: ${{ inputs.api_key }}
+      run: |
+        # Construct the command
+        CMD="roo --print --oneshot"
+        
+        if [ -n "${{ inputs.prompt_file }}" ]; then
+          CMD="$CMD --prompt-file ${{ inputs.prompt_file }}"
+        fi
+        
+        CMD="$CMD --workspace ${{ inputs.workspace }}"
+        CMD="$CMD --provider ${{ inputs.provider }}"
+        CMD="$CMD --model ${{ inputs.model }}"
+        CMD="$CMD --mode ${{ inputs.mode }}"
+        
+        if [ -n "${{ inputs.extra_args }}" ]; then
+          CMD="$CMD ${{ inputs.extra_args }}"
+        fi
+        
+        # Add the positional prompt if it exists
+        if [ -n "${{ inputs.prompt }}" ]; then
+          CMD="$CMD \"${{ inputs.prompt }}\""
+        fi
+
+        # Execute and capture output
+        echo "Executing: $CMD"
+        $CMD
