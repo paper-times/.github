@@ -1,25 +1,26 @@
 # 📑 Ops-Handbook: PaperTimes Infrastructure
+---
 
-This document outlines the operational specifications for the PaperTimes platform, utilizing a **Global-to-Local** Railway architecture.
+## The Stack
+
+| Layer | Technology |
+| --- | --- |
+| **Package Manager** | [pnpm](https://www.google.com/search?q=https://pnpm.io/) |
+| **Cloud Infra & Orchestration** | [Railway](https://www.google.com/search?q=https://railway.app/) |
+| **Backend / DB** | [Convex](https://www.google.com/search?q=https://www.convex.dev/) |
+| **Auth & SSO** | [WorkOS](https://www.google.com/search?q=https://workos.com/) |
+| **Frontend** | [Vite](https://www.google.com/search?q=https://vitejs.dev/) + [TanStack (Router/Query)](https://www.google.com/search?q=https://tanstack.com/) |
+| **Monitoring** | Railway |
 
 ---
 
-## 🏗️ 1. Architecture Overview
+## Contribution Guidelines
 
-### A. The Global Project (`papertimes-global`)
+We maintain a strict **Feature Branch** workflow:
 
-**Goal:** Centralized "Command Center" for the PaperTimes team.
-
-* **Admin Portal:** `admin.papertimes.ca` (vite/TanStack).
-* **WorkOS Main Instance:** Manages global team auth and client organization provisioning.
-* **Global Convex Backend:** Stores client metadata, billing status, and project mapping.
-
-### B. The Client Project Template (`papertimes-client-template`)
-
-**Goal:** A repeatable Railway project definition deployed for every new B2B client.
-
-* **Environments:** Each client project contains its own `Prod`, `Stage`, and `Dev` environments.
-* **Isolation:** Each client has a dedicated **Convex Deployment** and **WorkOS Organization**.
+* **`feat/*`**: Development and Ephemeral PR environments.
+* **`develop`**: Automatically deploys to the **Staging** environment for QA.
+* **`main`**: The source of truth for **Production**.
 
 ---
 
@@ -51,8 +52,6 @@ Each Railway project instantiated from the template includes:
 * `WORKOS_ORG_ID`: Unique ID for that client's enterprise features.
 * `CONVEX_DEPLOY_KEY`: Unique key for the client’s backend deployment.
 
-
-
 ---
 
 ## 🚀 4. Deployment Logic
@@ -74,7 +73,6 @@ npx convex deploy --cmd 'npm run build .....'
 
 ```
 
-
 * **Scope:** PRs use **Convex Preview** deployments which are automatically deleted when the Railway PR environment is closed.
 
 ---
@@ -89,8 +87,6 @@ npx convex deploy --cmd 'npm run build .....'
 
 
 * **Global Admin Access:** The Global Admin uses a master WorkOS key to "impersonate" or manage client settings across projects.
-
----
 
 ---
 
